@@ -6,7 +6,7 @@ public class PlayField : MonoBehaviour
 {
     //as tileMap
     public Vector2Int mapSize = new Vector2Int(10, 20);
-    public Tile[,] TileMap { get; private set; }    
+    public Tile[,] TileMap { get; private set; }
 
     private void Awake()
     {
@@ -20,7 +20,8 @@ public class PlayField : MonoBehaviour
         for(int i = 0; i < 4; i++)
         {
             Tile tile = tiles[i];
-            Coord coord = tile.worldcoord;
+            Coord coord = tile.coord;
+            //Debug.Log(coord + "updated");
             TileMap[coord.x, coord.y] = tile;
             tile.transform.SetParent(transform);
         }
@@ -32,14 +33,14 @@ public class PlayField : MonoBehaviour
     public void CheckAnyLineClear()
     {
         List<int> clearedLines = new List<int>();
-        for(int y = 0; y< mapSize.y; y++)
+        for (int y = 0; y < mapSize.y; y++)
         {
             bool lineClear = true;
-            for(int x = 0; x < mapSize.x; x++)
+            for (int x = 0; x < mapSize.x; x++)
             {
                 Tile tile = TileMap[x, y];
 
-                if(tile == null)
+                if (tile == null)
                 {
                     lineClear = false;
                     break;
@@ -47,10 +48,10 @@ public class PlayField : MonoBehaviour
             }
             if (lineClear)
             {
-                for(int x = 0; x < mapSize.x; x++)
+                for (int x = 0; x < mapSize.x; x++)
                 {
                     Destroy(TileMap[x, y].gameObject);
-                    TileMap[x, y] = null;            
+                    TileMap[x, y] = null;
                 }
                 clearedLines.Add(y);
             }
@@ -70,19 +71,19 @@ public class PlayField : MonoBehaviour
         for (int y = 0; y < mapSize.y; y++)
         {
             int nullCount = 0;
-            foreach (int emptyRow in clearedlines) { if (y > emptyRow) nullCount++; }            
+            foreach (int emptyRow in clearedlines) { if (y > emptyRow) nullCount++; }
 
             for (int x = 0; x < mapSize.x; x++)
             {
-                if(nullCount > 0)
+                if (nullCount > 0)
                 {
                     Tile tile = TileMap[x, y];
                     if (tile != null)
                     {
-                        Coord newCoord = new Coord(tile.worldcoord.x, tile.worldcoord.y - nullCount);
+                        Coord newCoord = new Coord(tile.coord.x, tile.coord.y - nullCount);
                         TileMap[newCoord.x, newCoord.y] = tile;
                         tile.transform.position = Coord.CoordToPostion(newCoord, mapSize);
-                        tile.worldcoord = newCoord;                        
+                        tile.coord = newCoord;
                         TileMap[x, y] = null;
                     }
                 }

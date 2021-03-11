@@ -1,47 +1,29 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour//tetrmino controller
 {
-    private PlayField playField;
+    public Piece piecePrefab;
+    public int seed;
 
-    PlayerController controller;
+    private System.Random rnd;
+    private PlayField playField;
 
     private void Awake()
     {
+        rnd = new System.Random(seed);
         playField = GetComponent<PlayField>();
-        controller = new PlayerController();
-        controller.Gameplay.Start.performed += cts => StartGame();
     }
 
-    private void OnEnable()
+    private void Update()
     {
-        controller.Enable();
+        if (Keyboard.current.oKey.wasPressedThisFrame) StartGame();
     }
 
-    private void OnDisable()
-    {
-        controller.Disable();
-    }
-
-    private void TestingField()
-    {
-        for(int x = 0; x < playField.mapSize.x - 1; x++)
-        {
-            for(int y = 0; y < 4; y++)
-            {
-                Coord coord = new Coord(x, y);
-                Vector3 pos = Coord.CoordToPostion(coord, playField.mapSize);
-                playField.TileMap[x, y] = Instantiate(RefillSystem.Instance.tilePrefab, pos, Quaternion.identity, transform);
-            }
-        }
-    }
-
-    private async void StartGame()
+    private void StartGame()
     {
         for (int x = 0; x < playField.mapSize.x; x++)
         {
@@ -55,29 +37,36 @@ public class Player : MonoBehaviour//tetrmino controller
                 }
             }
         }
-        await TetrominoGravitateAsync();
+
+        SetNewTetromino();
     }
 
-    private async Task TetrominoGravitateAsync()
+    private void SetNewTetromino()
     {
-        Tetromino piece = RefillSystem.Instance.GetRandomTetromino();
-        piece.Init(playField.TileMap, playField.mapSize);
+        Piece piece = Instantiate(piecePrefab, transform);
+        piece.Init(rnd.Next(0, 6), playField.TileMap);
 
-        Tile[] tiles = await piece.HitGround(1);
+        if (!TopOut()) { GameOver(); }
 
-        playField.UpdateTileMap(tiles);
-
-        Destroy(piece.gameObject);
-
-        if (!TopOut())
+        void onGroundHit(Tile[] tiles)
         {
-            await TetrominoGravitateAsync();
+            playField.UpdateTileMap(tiles);
+            Destroy(piece.gameObject);
+            piece = null;
+            SetNewTetromino();
         }
+
+        piece.EnableGravity(1, onGroundHit);
     }
 
     private bool TopOut()
     {
         return false;
+    }
+
+    private void GameOver()
+    {
+
     }
 
 
