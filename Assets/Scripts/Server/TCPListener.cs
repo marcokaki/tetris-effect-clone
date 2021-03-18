@@ -52,6 +52,7 @@ public class TCPListener : MonoBehaviour
 
                 try
                 {
+                    Debug.Log("try to accept new client");
                     var clientSocket = new ClientSocket(listener.Accept());
                     handlers.Add(clientSocket);
                     string welcomeString = "Greeting From the server !!!";
@@ -98,7 +99,7 @@ public class TCPListener : MonoBehaviour
             {
                 foreach(ClientSocket handler in handlers)
                 {
-                    //if (handler == this) continue;
+                    if (handler == this) continue;
                     handler.OnSend(data);
                 }
                 data = null;
@@ -110,7 +111,6 @@ public class TCPListener : MonoBehaviour
             handler.Send(Encoding.ASCII.GetBytes(msg));
         }
     }
-
 
 
     private void ShutDownServer()

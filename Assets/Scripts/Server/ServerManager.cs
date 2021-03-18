@@ -13,7 +13,7 @@ public class ServerManager : MonoBehaviour
         TCPClient.Instance.Connect();
     }
 
-    private void JoinGame()
+    public void JoinGame()
     {
         TCPClient.Instance.Connect();
     }
