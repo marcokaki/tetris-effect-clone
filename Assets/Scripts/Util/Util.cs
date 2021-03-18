@@ -28,6 +28,23 @@ public static class Util
         return false;
     }
 
+    public static T[][] UnflattenArray<T>(this T[] ts, Vector2Int vector2Int)
+    {
+        T[][] vs = new T[vector2Int.y][];
+
+        int count = 0;
+        for (int y = 0; y < vector2Int.y; y++)
+        {
+            vs[y] = new T[vector2Int.x];
+            for(int x = 0; x < vector2Int.x; x++)
+            {
+                vs[y][x] = ts[count];
+                count++;
+            }
+        }
+        return vs;
+    }
+
 
 
 

@@ -45,3 +45,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tilePrefab: {fileID: 1591685035401125325, guid: 2ede7b216b6a95a40a7638fa5f564ffb,
     type: 3}
+  pos: {x: 0, y: 0}
+  type: 0
+  dir: 0
