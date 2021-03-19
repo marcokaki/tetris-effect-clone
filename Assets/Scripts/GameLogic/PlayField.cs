@@ -18,9 +18,6 @@ public class PlayField : MonoBehaviour
         for (int y = 0; y < mapSize.y; y++) tiles[y] = new int[mapSize.x];
     }
 
-
-
-
     public bool IsOverlapped(Piece.Shape shape, Vector2Int pos)
     {
         var s = shape;

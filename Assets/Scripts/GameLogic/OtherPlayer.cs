@@ -7,12 +7,7 @@ public class OtherPlayer : MonoBehaviour
     Piece currentPiece;
     PlayField playField;
 
-    private void Start()
-    {
-        TCPClient.Instance.othersMapUpdate += UpdateMap;
-    }
-
-    private void UpdateMap(MapData data)
+    public void UpdateMap(MapData data)
     {
         if (playField == null) playField = GetComponent<PlayField>();
         playField.MapUpdate(data.tiles);
@@ -33,14 +28,4 @@ public class OtherPlayer : MonoBehaviour
         currentPiece.pos.y = data.sPosY;
         currentPiece.dir = (Piece.Shape.Dir)data.sDir;
     }
-
-    private void OnDestroy()
-    {
-        TCPClient.Instance.othersMapUpdate -= UpdateMap;
-    }
-
-
-
-
-
 }

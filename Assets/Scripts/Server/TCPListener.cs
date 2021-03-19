@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+using System.Linq;
 
 public class TCPListener : MonoBehaviour
 {
@@ -22,10 +23,16 @@ public class TCPListener : MonoBehaviour
     readonly int maxClientCount = 2;
     static readonly List<ClientSocket> handlers = new List<ClientSocket>();
 
-    public void Run()
+    public void Open(string ip = null)
     {
-        IPHostEntry host = Dns.GetHostEntry("localhost");
-        IPAddress ipAddress = host.AddressList[0];
+        if (listener != null) return;
+
+        if (!IPAddress.TryParse(ip, out IPAddress ipAddress))
+        {
+            IPHostEntry host = Dns.GetHostEntry("localhost");
+            ipAddress = host.AddressList[0];
+        }
+
         IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
 
         try
@@ -46,13 +53,14 @@ public class TCPListener : MonoBehaviour
     {
         if (isInit)
         {
+            removeClosedClients();
+
             if(listener.Poll(1, SelectMode.SelectRead))
             {
                 if (handlers.Count >= maxClientCount) return;
 
                 try
                 {
-                    Debug.Log("try to accept new client");
                     var clientSocket = new ClientSocket(listener.Accept());
                     handlers.Add(clientSocket);
                     string welcomeString = "Greeting From the server !!!";
@@ -72,6 +80,18 @@ public class TCPListener : MonoBehaviour
                 catch
                 {
                     //close client
+                }
+            }
+        }
+
+        void removeClosedClients()
+        {
+            for(int i = handlers.Count - 1; i >=0; i--)
+            {
+                var clientHandler = handlers[i].handler;
+                if (clientHandler.Available == 0 && clientHandler.Poll(1, SelectMode.SelectRead))
+                {
+                    handlers.RemoveAt(i);
                 }
             }
         }
@@ -99,7 +119,7 @@ public class TCPListener : MonoBehaviour
             {
                 foreach(ClientSocket handler in handlers)
                 {
-                    if (handler == this) continue;
+                    //if (handler == this) continue;//disable this to echco
                     handler.OnSend(data);
                 }
                 data = null;
@@ -108,6 +128,9 @@ public class TCPListener : MonoBehaviour
 
         public void OnSend(string msg)
         {
+            if (!handler.Poll(1, SelectMode.SelectWrite))
+                return;
+
             handler.Send(Encoding.ASCII.GetBytes(msg));
         }
     }
@@ -115,7 +138,8 @@ public class TCPListener : MonoBehaviour
 
     private void ShutDownServer()
     {
-/*        handler.Shutdown(SocketShutdown.Both);
+/*        
+        handler.Shutdown(SocketShutdown.Both);
         handler.Close();*/
     }
 

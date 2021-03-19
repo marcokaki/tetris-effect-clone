@@ -10,14 +10,14 @@ public class Player : MonoBehaviour//tetrmino controller
     public int seed;
 
     System.Random rnd;
-
     PlayField playField;
     Piece currentPiece;
 
     public float moveCooldown = 0.05f;
     float _moveCooldownRemain = 0;
 
-    public Action mapUpdate;
+    Queue<Piece> nextPieceQueue;
+    readonly int nextCount = 1;
 
     private void Awake()
     {
@@ -28,8 +28,16 @@ public class Player : MonoBehaviour//tetrmino controller
     {
         rnd = new System.Random(seed);
         playField = GetComponent<PlayField>();
+        nextPieceQueue = new Queue<Piece>();
 
-        NewPiece();
+        while(nextPieceQueue.Count < nextCount)
+        {
+            nextPieceQueue.Enqueue(NewPiece());
+        }
+
+        GetPiece();
+
+
     } 
 
     private void Update()
@@ -42,25 +50,35 @@ public class Player : MonoBehaviour//tetrmino controller
         if (kb.wKey.isPressed) MovePiece(0, 1, 0);
         if (kb.aKey.isPressed) MovePiece(-1, 0, 0);
         if (kb.dKey.isPressed) MovePiece(1, 0, 0);
-        if (kb.rKey.wasPressedThisFrame) MovePiece(0, 0, 1);     
+        if (kb.rKey.wasPressedThisFrame) MovePiece(0, 0, 1);
     }
 
-
-    void NewPiece()
+    Piece NewPiece()
     {
-        if (!currentPiece)
-        {
-            var pieceObj = new GameObject("Piece");
-            pieceObj.transform.SetParent(transform, false);
-            currentPiece = pieceObj.AddComponent<Piece>();            
-        }
-        currentPiece.RandomShape(rnd.Next(0, Piece.Shape.typeCount));
-        currentPiece.pos.x = 3;
-        currentPiece.pos.y =18;
-        currentPiece.transform.position = new Vector3(-playField.mapSize.x / 2 + 0.5f, -playField.mapSize.y / 2 + 0.5f);
-        currentPiece.transform.position += transform.position;
+        var pieceObj = new GameObject("Piece");
+        pieceObj.transform.SetParent(transform, false);
+        Piece piece = pieceObj.AddComponent<Piece>();
 
-        OnMapUpdated();
+        piece.RandomShape(rnd.Next(0, Piece.Shape.typeCount));
+        piece.pos.x = 12;// <= Next Box Position
+        piece.pos.y = 9;
+
+        piece.transform.position = GetPieceWorldPosition();
+
+        return piece;
+    }
+
+    void GetPiece()
+    {
+        if (currentPiece != null) return;
+        currentPiece = nextPieceQueue.Dequeue();
+        currentPiece.pos.x = 3;
+        currentPiece.pos.y = 18;
+        currentPiece.transform.position = GetPieceWorldPosition();
+
+        nextPieceQueue.Enqueue(NewPiece());
+
+        UpdateMapToServerOnRefresh();
     }
 
     void MovePiece(int x, int y, int rotate) { MovePiece(new Vector2Int(x, y), rotate); }
@@ -81,7 +99,7 @@ public class Player : MonoBehaviour//tetrmino controller
                 playField.OnPieceGroundHit(currentPiece);
                 Destroy(currentPiece.gameObject);
                 currentPiece = null;
-                NewPiece();
+                GetPiece();
             }
             return;
         }
@@ -89,36 +107,33 @@ public class Player : MonoBehaviour//tetrmino controller
         currentPiece.pos += offset;
         currentPiece.dir = newDir;
 
-        OnMapUpdated();
+        UpdateMapToServerOnRefresh();
     }
 
-    private void OnMapUpdated()
+    Vector3 GetPieceWorldPosition()
     {
-        TCPClient.Instance.OnMapUpdate(playField.tiles, currentPiece);
+        return new Vector3(-playField.mapSize.x / 2 + 0.5f + transform.position.x, -playField.mapSize.y / 2 + 0.5f + transform.position.y);
     }
+
+    #region Server Code
+    public void HostGame()
+    {
+        ServerManager.Instance.HostGame(this);
+    }
+
+    public void JoinGame()
+    {
+        ServerManager.Instance.JoinGame(this);
+    }
+
+    public Action<int[][], Piece> mapUpdate;
+    public void UpdateMapToServerOnRefresh()
+    {
+        mapUpdate?.Invoke(playField.tiles, currentPiece);
+    }
+    #endregion
 }
 
 
-[Serializable]
-public struct MapData
-{
-    public int[] tiles;
-    public int sPosX;
-    public int sPosY;
-    public int sType;
-    public int sDir;
-    public int mapSizeX;
-    public int mapSizeY;
 
-    public MapData(int[][] aTiles, Piece aPiece)
-    {
-        tiles = aTiles.SelectMany(t => t).ToArray();// <<<
-        sPosX = aPiece.pos.x;
-        sPosY = aPiece.pos.y;
-        sType = (int)aPiece.type;
-        sDir = (int)aPiece.dir;
-        mapSizeX = aTiles[0].Length;
-        mapSizeY = aTiles.Length;
-    }
-}
 
