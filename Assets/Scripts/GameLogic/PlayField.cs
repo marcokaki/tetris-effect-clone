@@ -6,16 +6,22 @@ using System;
 public class PlayField : MonoBehaviour
 {
     public Vector2Int mapSize = new Vector2Int(10, 20);
-
+    public Transform NextBoxTransform;
+    
     private int mapWidth => mapSize.x;
     private int mapHeight => mapSize.y;
 
     public int[][] tiles { get; private set; }
 
+    float[] tileMapArray;
+    Material mat;
+
     private void Awake() {
 
         tiles = new int[mapSize.y][];
         for (int y = 0; y < mapSize.y; y++) tiles[y] = new int[mapSize.x];
+        tileMapArray = new float[mapSize.x * mapSize.y];
+        mat = GetComponent<Renderer>().material;
     }
 
     public bool IsOverlapped(Piece.Shape shape, Vector2Int pos)
@@ -70,16 +76,9 @@ public class PlayField : MonoBehaviour
             else if (nullCount > 0)
             {
                 tiles[y - nullCount] = tiles[y];
-                //Array.Clear(tiles[y], 0, tiles[y].Length); <= Bug i.e. all tiles got cleared dun know why?
                 tiles[y] = new int[mapSize.x]; // temperory code;                
             }
         }
-/*        if (nullCount == 0) return; <= BUG
-
-        for(int y = mapSize.y - nullCount; y < mapSize.y; y++)
-        {
-            tiles[y] = new int[mapSize.x];
-        }*/
     }
 
     public void MapUpdate(int[] flattenTiles)
@@ -96,28 +95,18 @@ public class PlayField : MonoBehaviour
         }
     }
 
+    private void Update() => OnDrawMap();
 
-
-
-    private void OnDrawGizmos()
+    private void OnDrawMap()
     {
-        Gizmos.matrix = transform.localToWorldMatrix;
-
-        var drawSize = Piece.drawSize;
-
-        if (tiles == null) return;
-
-        for (int y = 0; y < mapHeight; y++)
+        for(int y = 0; y < mapHeight; y++)
         {
-            for (int x = 0; x < mapWidth; x++)
+            for(int x = 0; x < mapWidth; x++)
             {
-                if (tiles[y][x] == 0) continue;
-
-                var pos = Vector3.Scale(new Vector3(-mapSize.x / 2 + x + 0.5f, -mapSize.y / 2 + y + 0.5f, 0), drawSize);
-                Gizmos.DrawWireCube(pos, drawSize);
+                tileMapArray[x + mapWidth * y] = tiles[y][x];
             }
         }
+        mat.SetFloatArray("_TileMapArray", tileMapArray);
     }
-
 
 }

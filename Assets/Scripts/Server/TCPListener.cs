@@ -40,6 +40,7 @@ public class TCPListener : MonoBehaviour
             listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             listener.Bind(localEndPoint);
             listener.Listen(10);
+            Debug.Log("sucessfully bind listener");
             isInit = true;
         }
         catch (System.Exception e)

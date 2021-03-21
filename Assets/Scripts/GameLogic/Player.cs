@@ -7,10 +7,11 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour//tetrmino controller
 {
+    public Piece piecePrefab;
+    public PlayField playField;
     public int seed;
 
     System.Random rnd;
-    PlayField playField;
     Piece currentPiece;
 
     public float moveCooldown = 0.05f;
@@ -27,17 +28,13 @@ public class Player : MonoBehaviour//tetrmino controller
     private void Start()
     {
         rnd = new System.Random(seed);
-        playField = GetComponent<PlayField>();
         nextPieceQueue = new Queue<Piece>();
 
         while(nextPieceQueue.Count < nextCount)
         {
             nextPieceQueue.Enqueue(NewPiece());
         }
-
         GetPiece();
-
-
     } 
 
     private void Update()
@@ -55,15 +52,14 @@ public class Player : MonoBehaviour//tetrmino controller
 
     Piece NewPiece()
     {
-        var pieceObj = new GameObject("Piece");
-        pieceObj.transform.SetParent(transform, false);
-        Piece piece = pieceObj.AddComponent<Piece>();
+        Piece piece = Instantiate(piecePrefab);
+        piece.transform.SetParent(transform, true);
 
         piece.RandomShape(rnd.Next(0, Piece.Shape.typeCount));
-        piece.pos.x = 12;// <= Next Box Position
-        piece.pos.y = 9;
 
-        piece.transform.position = GetPieceWorldPosition();
+        piece.transform.SetParent(playField.NextBoxTransform);
+
+        piece.transform.localPosition = Vector3.zero;
 
         return piece;
     }
@@ -74,11 +70,12 @@ public class Player : MonoBehaviour//tetrmino controller
         currentPiece = nextPieceQueue.Dequeue();
         currentPiece.pos.x = 3;
         currentPiece.pos.y = 18;
-        currentPiece.transform.position = GetPieceWorldPosition();
+
+        currentPiece.transform.SetParent(transform);
 
         nextPieceQueue.Enqueue(NewPiece());
 
-        UpdateMapToServerOnRefresh();
+        OnPieceUpdate();
     }
 
     void MovePiece(int x, int y, int rotate) { MovePiece(new Vector2Int(x, y), rotate); }
@@ -107,12 +104,19 @@ public class Player : MonoBehaviour//tetrmino controller
         currentPiece.pos += offset;
         currentPiece.dir = newDir;
 
+        OnPieceUpdate();
+    }
+
+    private void OnPieceUpdate()
+    {        
+        SetPiecePosition(currentPiece);
         UpdateMapToServerOnRefresh();
     }
 
-    Vector3 GetPieceWorldPosition()
+    void SetPiecePosition(Piece p)
     {
-        return new Vector3(-playField.mapSize.x / 2 + 0.5f + transform.position.x, -playField.mapSize.y / 2 + 0.5f + transform.position.y);
+        p.transform.localPosition = new Vector3(-playField.mapSize.x / 2  + p.pos.x + 2,
+                                                -playField.mapSize.y / 2  + p.pos.y + 2);
     }
 
     #region Server Code

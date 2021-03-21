@@ -22,6 +22,8 @@ public class ServerManager : MonoBehaviour
 
     public void HostGame(Player player)
     {
+        Debug.Log("host game");
+
         TCPListener.Instance.Open(hostInput.text);
         TCPClient.Instance.Connect(hostInput.text);
         hostInput.interactable = false;
