@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
-public static class MyUtil
-{
-    public static int EnumCount<T>()
-    {
-        return System.Enum.GetValues(typeof(T)).Length;
-    }
-}
 
+
+[ExecuteInEditMode]
 public class Piece : MonoBehaviour
 {
     public static Vector3 drawSize => Vector3.one * 1;
@@ -26,7 +18,7 @@ public class Piece : MonoBehaviour
 
         public Matrix4x4 mat;
 
-        public static int typeCount => MyUtil.EnumCount<Type>();
+        public static int typeCount => Util.EnumCount<Type>();
         public int dirCount;
     }
     public class ShapeTable {

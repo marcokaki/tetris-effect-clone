@@ -9,7 +9,7 @@ public class OtherPlayer : MonoBehaviour
 
     Piece currentPiece;    
 
-    public void UpdateMap(MapData data)
+/*    public void UpdateMap(MapData data)
     {
         if (currentPiece == null)
         {
@@ -27,7 +27,7 @@ public class OtherPlayer : MonoBehaviour
 
         playField.MapUpdate(data.tiles);
     }
-
+*/
     void SetPiecePosition(Piece p)
     {
         p.transform.localPosition = new Vector3(-playField.mapSize.x / 2 + p.pos.x + 2,

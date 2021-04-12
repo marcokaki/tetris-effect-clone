@@ -39,6 +39,11 @@
             v2f vert(appdata v)
             {
                 v2f o;
+
+                if (v.uv.x == -1) {
+                    v.vertex = 3;
+                }
+
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 

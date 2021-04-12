@@ -2,19 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.InputSystem;
 
 public class PlayField : MonoBehaviour
 {
     public Vector2Int mapSize = new Vector2Int(10, 20);
-    public Transform NextBoxTransform;
-    
-    private int mapWidth => mapSize.x;
-    private int mapHeight => mapSize.y;
 
     public int[][] tiles { get; private set; }
 
+    int mapWidth => mapSize.x;
+    int mapHeight => mapSize.y; 
+
     float[] tileMapArray;
     Material mat;
+    //TileMapMeshModifier _modifier;
+
 
     private void Awake() {
 
@@ -22,6 +24,8 @@ public class PlayField : MonoBehaviour
         for (int y = 0; y < mapSize.y; y++) tiles[y] = new int[mapSize.x];
         tileMapArray = new float[mapSize.x * mapSize.y];
         mat = GetComponent<Renderer>().material;
+        //_modifier = new TileMapMeshModifier(GetComponent<MeshFilter>().mesh, mapSize);
+
     }
 
     public bool IsOverlapped(Piece.Shape shape, Vector2Int pos)
@@ -44,7 +48,7 @@ public class PlayField : MonoBehaviour
         return false;
     }
 
-    public void OnPieceGroundHit(Piece piece)
+    public int OnPieceGroundHit(Piece piece)
     {
         var s = piece.shape;
         var pos = piece.pos;
@@ -60,10 +64,11 @@ public class PlayField : MonoBehaviour
                 tiles[py][px] = 1;
             }
         }
-        CheckLineClear();
+
+        return CheckLineClear();
     }
 
-    private void CheckLineClear()
+    int CheckLineClear()
     {
         int nullCount = 0;
 
@@ -79,6 +84,8 @@ public class PlayField : MonoBehaviour
                 tiles[y] = new int[mapSize.x]; // temperory code;                
             }
         }
+
+        return nullCount;
     }
 
     public void MapUpdate(int[] flattenTiles)
@@ -99,10 +106,10 @@ public class PlayField : MonoBehaviour
 
     private void OnDrawMap()
     {
-        for(int y = 0; y < mapHeight; y++)
-        {
-            for(int x = 0; x < mapWidth; x++)
-            {
+        //_modifier.OnDrawTileMapTriangles(tiles);
+
+        for (int y = 0; y < mapHeight; y++) {
+            for (int x = 0; x < mapWidth; x++) {
                 tileMapArray[x + mapWidth * y] = tiles[y][x];
             }
         }

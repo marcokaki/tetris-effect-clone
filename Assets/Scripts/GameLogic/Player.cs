@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,16 +6,13 @@ public class Player : MonoBehaviour//tetrmino controller
 {
     public Piece piecePrefab;
     public PlayField playField;
-    public int seed;
 
-    System.Random rnd;
     Piece currentPiece;
 
     public float moveCooldown = 0.05f;
     float _moveCooldownRemain = 0;
 
-    Queue<Piece> nextPieceQueue;
-    readonly int nextCount = 1;
+    PlayerLevelControl control;
 
     private void Awake()
     {
@@ -27,13 +21,8 @@ public class Player : MonoBehaviour//tetrmino controller
 
     private void Start()
     {
-        rnd = new System.Random(seed);
-        nextPieceQueue = new Queue<Piece>();
-
-        while(nextPieceQueue.Count < nextCount)
-        {
-            nextPieceQueue.Enqueue(NewPiece());
-        }
+        control = GetComponent<PlayerLevelControl>();
+        control.Init();
         GetPiece();
     } 
 
@@ -48,33 +37,22 @@ public class Player : MonoBehaviour//tetrmino controller
         if (kb.aKey.isPressed) MovePiece(-1, 0, 0);
         if (kb.dKey.isPressed) MovePiece(1, 0, 0);
         if (kb.rKey.wasPressedThisFrame) MovePiece(0, 0, 1);
+
+        if (kb.vKey.wasPressedThisFrame) {
+            control.OnLineCleared(1);
+        }
     }
 
-    Piece NewPiece()
-    {
-        Piece piece = Instantiate(piecePrefab);
-        piece.transform.SetParent(transform, true);
 
-        piece.RandomShape(rnd.Next(0, Piece.Shape.typeCount));
-
-        piece.transform.SetParent(playField.NextBoxTransform);
-
-        piece.transform.localPosition = Vector3.zero;
-
-        return piece;
-    }
 
     void GetPiece()
     {
         if (currentPiece != null) return;
-        currentPiece = nextPieceQueue.Dequeue();
+        currentPiece = control.GetNextPiece();
         currentPiece.pos.x = 3;
         currentPiece.pos.y = 18;
 
         currentPiece.transform.SetParent(transform);
-
-        nextPieceQueue.Enqueue(NewPiece());
-
         OnPieceUpdate();
     }
 
@@ -93,7 +71,12 @@ public class Player : MonoBehaviour//tetrmino controller
         {
             if(offset.y < 0)
             {
-                playField.OnPieceGroundHit(currentPiece);
+                int lineCleared = playField.OnPieceGroundHit(currentPiece);
+
+                if(lineCleared != 0) {
+                    control.OnLineCleared(lineCleared);
+                }                
+
                 Destroy(currentPiece.gameObject);
                 currentPiece = null;
                 GetPiece();
@@ -122,12 +105,12 @@ public class Player : MonoBehaviour//tetrmino controller
     #region Server Code
     public void HostGame()
     {
-        ServerManager.Instance.HostGame(this);
+        NetManager.Instance.HostGame(this);
     }
 
     public void JoinGame()
     {
-        ServerManager.Instance.JoinGame(this);
+        NetManager.Instance.JoinGame(this);
     }
 
     public Action<int[][], Piece> mapUpdate;
