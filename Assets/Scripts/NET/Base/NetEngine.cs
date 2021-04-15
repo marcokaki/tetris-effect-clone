@@ -9,6 +9,8 @@ public class NetEngine {
     readonly List<NESocket> listenSocks  = new List<NESocket>();
     readonly List<NESocket> connectSocks = new List<NESocket>();
 
+    int connectedCount;
+
     public void Update() {
 
         for (int i = 0; i < listenSocks.Count;) {
@@ -29,9 +31,9 @@ public class NetEngine {
                     connectSocks.Add(connectSock = listener.Accept());
 
                     connectSock._socket.Blocking = false;
-                    connectSock.state = NESocket.State.connected;//not connected yet
-                    
-                    OnAccept(connectSock);//wait until the it is writable 
+                    connectSock.state = NESocket.State.connected;
+                    connectSock.setSocketID(connectedCount++);
+                    OnAccept(connectSock);
                 }
             }
             catch(System.Exception e) {
@@ -126,8 +128,10 @@ public class NetEngine {
     }
 
     public int SendPacket<cmd>(NESocket s, NEPacket<cmd> nEPacket) where cmd : System.Enum {
-        if (s.state != NESocket.State.connected || !s._socket.Poll(0, SelectMode.SelectWrite))
+        if (s.state != NESocket.State.connected || !s._socket.Poll(0, SelectMode.SelectWrite)) {
+            Debug.Log("packet cannot send");
             return 0;
+        }
 
         try {
             nEPacket.writeToBuffer(sendBuff);
@@ -137,6 +141,15 @@ public class NetEngine {
             Debug.Log(e);
             return 0;
         }
+    }
+
+    public int SendAllExcept<cmd>(NESocket exceptS, NEPacket<cmd> nEPacket) where cmd : System.Enum {
+        int byteSend = 0;
+        foreach(var sock in connectSocks) {
+            if (exceptS == sock) continue;
+            byteSend += SendPacket(sock, nEPacket);
+        }
+        return byteSend;
     }
 }
 

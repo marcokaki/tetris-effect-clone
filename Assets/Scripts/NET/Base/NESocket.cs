@@ -12,8 +12,8 @@ public class NESocket {
     PacketHeader _hdr;
     byte[] _recvBuf;
 
+    public int _id;
     int _maxClient;
-
 
     public NESocket(SocketAddress addr, ProtocolType type) {
         _socket = new Socket(addr.iPAddress.AddressFamily, SocketType.Stream, type);
@@ -22,6 +22,7 @@ public class NESocket {
     NESocket(Socket s) => _socket = s;
 
     public void setMaxClient(int value) => _maxClient = value;
+    public void setSocketID(int value) => _id = value;
 
     public NESocket Accept() {
         return new NESocket(_socket.Accept());
@@ -84,8 +85,14 @@ public class NESocket {
 
     public void Close() {
         state = State.disconnected;
-        _socket.Shutdown(SocketShutdown.Both);
-        _socket.Close();
+        try {
+            _socket.Shutdown(SocketShutdown.Both);
+            _socket.Close();
+        }
+        catch(System.Exception e) {
+            Debug.Log(e);
+        }
+
     }
 }
 

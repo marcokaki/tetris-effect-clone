@@ -88,18 +88,9 @@ public class PlayField : MonoBehaviour
         return nullCount;
     }
 
-    public void MapUpdate(int[] flattenTiles)
+    public void MapUpdate(int[][] tiles)
     {
-        int count = 0;
-
-        for(int y = 0; y < mapHeight; y++)
-        {
-            for(int x = 0; x < mapWidth; x++)
-            {
-                tiles[y][x] = flattenTiles[count];
-                count++;
-            }
-        }
+        this.tiles = tiles;
     }
 
     private void Update() => OnDrawMap();

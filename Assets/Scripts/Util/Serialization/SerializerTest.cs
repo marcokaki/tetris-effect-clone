@@ -8,7 +8,6 @@ public class SerializerTest : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //test2();
         //test_copy_array();
 
         {
@@ -32,43 +31,24 @@ public class SerializerTest : MonoBehaviour
 
             test_nested_array();*/
         }
-
-
     }
-
-    void test2() {
-
-        GreetingPacket2 pkt = new GreetingPacket2(ClientPacketCmd.Greeting);
-        pkt.s = "Hello Greeting From Gateway";
-
-        List<byte> buf = new List<byte>();
-        {
-            pkt.writeToBuffer(buf);
-        }
-
-        List<byte> buf1 = new List<byte>();
-        {
-            var se = new BinSerializer(buf1);
-            pkt.packetHeader.serialize(ref se);
-            se.io(ref pkt.s);
-        }
-    }
-
 
 
     void test_nested_array()
     {
-        int[][] vs = new int[3][];
+        uint[][] vs = new uint[20][];
 
-        vs[0] = new int[3]{0,1,2};
-        vs[1] = new int[3]{3,4,5};
-        vs[2] = new int[3]{6,7,8};
+        for(uint i = 0; i < 20; i++) {
+            vs[i] = new uint[10] {1,1,1,1,1,1,1,1,1,1 };
+        }
 
         var buf = new List<byte>();
         {
             var se = new BinSerializer(buf);
             se.io(ref vs);
         }
+
+        Debug.Log(buf.Count);
 
         int[][] vs1 = new int[0][];
         {

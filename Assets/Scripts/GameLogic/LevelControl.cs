@@ -1,9 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class PlayerLevelControl : MonoBehaviour {
+public class LevelControl : MonoBehaviour {
 
     [Header("Prefab")]
     public Piece piecePrefab;
@@ -12,26 +11,30 @@ public class PlayerLevelControl : MonoBehaviour {
     public int startLevel = 0;
 
     [Header("UI")]
-    public Transform   NextBoxTransform;
+    public Transform nextBoxTransform;
     public TextMeshPro levelTMP;
     public TextMeshPro scoreTMP;
     public TextMeshPro lineClearedTMP;
     public TextMeshPro timePassedTMP;
 
-    int currentLevel;
-    int currentScore;
-    int currentLineCleared;
-    int timePassed;
-
-    Queue<Piece>  pieceQueue;    
+    Queue<Piece> pieceQueue;
     System.Random _rnd;
-    int _lineToAdvance;
 
     public void OnLineCleared(int lineCleared) {
         LineClearedAppend(lineCleared);
         ScoreAppend(lineCleared);
         LevelAppend(lineCleared);
+
+        var pkt = new LineClearPacket() {
+            lines = (short)currentLineCleared,
+            level = (byte)currentLevel,
+            score = currentScore,
+        };
+
+        NetManager.Instance.Client.SendToServer(pkt);
     }
+
+
 
     public void Init() {
         _rnd = new System.Random(seed);
@@ -41,7 +44,7 @@ public class PlayerLevelControl : MonoBehaviour {
         VisualUpdateScore();
         VisualUpdateLevel();
 
-        while(pieceQueue.Count < queueSize) {
+        while (pieceQueue.Count < queueSize) {
             pieceQueue.Enqueue(NewPiece());
         }
     }
@@ -60,14 +63,24 @@ public class PlayerLevelControl : MonoBehaviour {
 
         piece.RandomShape(_rnd.Next(0, Piece.Shape.typeCount));
 
-        piece.transform.SetParent(NextBoxTransform);
+        piece.transform.SetParent(nextBoxTransform);
 
         piece.transform.localPosition = Vector3.zero;
 
         return piece;
     }
-
     #endregion
+
+    #region UI
+
+    #region Data Update
+
+    int currentLevel;
+    int currentScore;
+    int currentLineCleared;
+    int timePassed;
+
+    int lineToAdvance;
 
     void LineClearedAppend(int lineCleared) {
         currentLineCleared += lineCleared;
@@ -83,7 +96,6 @@ public class PlayerLevelControl : MonoBehaviour {
             case 2:
                 currentScore += 100  * (currentLevel + 1);
                 break;
-
             case 3:
                 currentScore += 300  * (currentLevel + 1);
                 break;
@@ -95,28 +107,48 @@ public class PlayerLevelControl : MonoBehaviour {
     }
 
     //Speed Lv: https://tetris.wiki/Tetris_(NES,_Nintendo)
-    void LevelAppend(int lineCleared) {        
-        _lineToAdvance += lineCleared;
+    void LevelAppend(int lineCleared) {
+        lineToAdvance += lineCleared;
 
         if (startLevel == -1) {
-            if (_lineToAdvance < 10) return;
+            if (lineToAdvance < 10) return;
         }
         else {
-            if (_lineToAdvance < startLevel * 10 + 10 &&
-                _lineToAdvance < Mathf.Max(startLevel * 10 - 50, 100)) 
+            if (lineToAdvance < startLevel * 10 + 10 &&
+                lineToAdvance < Mathf.Max(startLevel * 10 - 50, 100))
                 return;
 
             startLevel = -1;
         }
 
         currentLevel++;
-        _lineToAdvance = 0;
+        lineToAdvance = 0;
 
         VisualUpdateLevel();
-    } 
+    }
+    #endregion
 
-    void VisualUpdateLineCleared() => lineClearedTMP.text = "LINES-" + currentLineCleared.ToString();
-    void VisualUpdateScore() => scoreTMP.text = currentScore.ToString("0000000");
-    void VisualUpdateLevel() => levelTMP.text = currentLevel.ToString("00");
+    #region Visual Update
+    void VisualUpdateLineCleared() {
+        if (!lineClearedTMP) 
+            return;
+        lineClearedTMP.text = "LINES-" + currentLineCleared.ToString();
+    }
+    void VisualUpdateScore() {
+        if (!scoreTMP) 
+            return;
+        scoreTMP.text = currentScore.ToString("0000000"); 
+    }
+    void VisualUpdateLevel() {
+        if (!levelTMP)
+            return;
+        levelTMP.text = currentLevel.ToString("00"); 
+    }
+
+    #endregion
+    #endregion
+
+
+
 
 }
