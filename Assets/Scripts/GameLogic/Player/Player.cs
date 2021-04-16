@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Player : MonoBehaviour//tetrmino controller
+public class Player : MonoBehaviour, ICSideRecviable//tetrmino controller
 {
     public PlayField playField;
 
@@ -15,6 +16,7 @@ public class Player : MonoBehaviour//tetrmino controller
 
     private void Awake() {
         Application.targetFrameRate = 60;
+        NetManager.Instance.Client.RegisterListener(this, CSideCmd.login);
     }
 
     private void Start() {
@@ -35,6 +37,15 @@ public class Player : MonoBehaviour//tetrmino controller
         if (kb.rKey.wasPressedThisFrame) MovePiece(0, 0, 1);
     }
 
+    void OnPieceUpdate() {
+        SetPiecePosition(currentPiece);
+        NetManager.Instance.Client.SendToServer(GetPlayFieldPacket());
+    }
+
+    void ICSideRecviable.OnRecv(NEPacket<CSideCmd> pkt) {
+        NetManager.Instance.Client.SendToServer(GetPlayFieldPacket());
+    }
+
     void GetPiece() {
         if (currentPiece != null) return;
         currentPiece = control.GetNextPiece();
@@ -45,7 +56,7 @@ public class Player : MonoBehaviour//tetrmino controller
         OnPieceUpdate();
     }
 
-    void MovePiece(int x, int y, int rotate) { MovePiece(new Vector2Int(x, y), rotate); }
+    void MovePiece(int x, int y, int rotate) => MovePiece(new Vector2Int(x, y), rotate);
 
     void MovePiece(Vector2Int offset, int rotate) {
         if (_moveCooldownRemain > 0) return;
@@ -78,23 +89,19 @@ public class Player : MonoBehaviour//tetrmino controller
         OnPieceUpdate();
     }
 
-    private void OnPieceUpdate() {
-        SetPiecePosition(currentPiece);
-
-        var pkt = new PlayFieldPacket() {
-            piece = currentPiece,
-            tileMap = playField.tiles,
-        };
-
-        NetManager.Instance.Client.SendToServer(pkt);
-    }
-
     void SetPiecePosition(Piece p) {
         p.transform.localPosition = new Vector3(-playField.mapSize.x / 2  + p.pos.x + 2,
                                                 -playField.mapSize.y / 2  + p.pos.y + 2);
     }
 
-    
+    PlayFieldPacket GetPlayFieldPacket() {
+        var pkt = new PlayFieldPacket() {
+            piece = currentPiece,
+            tileMap = playField.tiles,
+        };
+        return pkt;
+    }
+
 }
 
 

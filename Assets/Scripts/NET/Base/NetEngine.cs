@@ -133,6 +133,9 @@ public class NetEngine {
             return 0;
         }
 
+        nEPacket.writeToBuffer(sendBuff);
+        return s._socket.Send(sendBuff.ToArray());
+/*
         try {
             nEPacket.writeToBuffer(sendBuff);
             return s._socket.Send(sendBuff.ToArray());
@@ -140,13 +143,21 @@ public class NetEngine {
         catch(System.Exception e) {
             Debug.Log(e);
             return 0;
-        }
+        }*/
     }
 
     public int SendAllExcept<cmd>(NESocket exceptS, NEPacket<cmd> nEPacket) where cmd : System.Enum {
         int byteSend = 0;
         foreach(var sock in connectSocks) {
             if (exceptS == sock) continue;
+            byteSend += SendPacket(sock, nEPacket);
+        }
+        return byteSend;
+    }
+
+    public int SendAll<cmd>(NEPacket<cmd> nEPacket) where cmd : System.Enum {
+        int byteSend = 0;
+        foreach(var sock in connectSocks) {
             byteSend += SendPacket(sock, nEPacket);
         }
         return byteSend;

@@ -1,9 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem;
 
-
-
-[ExecuteInEditMode]
 public class Piece : MonoBehaviour
 {
     public static Vector3 drawSize => Vector3.one * 1;

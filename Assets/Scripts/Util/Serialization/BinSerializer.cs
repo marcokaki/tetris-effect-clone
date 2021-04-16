@@ -189,6 +189,7 @@ public ref struct BinSerializer
 		if (type == typeof(char  )) { char   tmp = (char  )obj; io(ref tmp); return; }
 
 		var list = obj as System.Collections.IList;
+		
 		if (list != null)
 		{
 			int len = list.Count;
@@ -198,7 +199,8 @@ public ref struct BinSerializer
 				io_object(list[i]);
 			}
 			return;
-		}
+        }
+
 
 		var dict = obj as System.Collections.IDictionary;
 		if (dict != null)
@@ -215,13 +217,12 @@ public ref struct BinSerializer
 			return;
 		}
 
-		var fields = type.GetFields();
-		foreach (var f in fields)
-		{
-			var fieldValue = f.GetValue(obj);
-			io_object(fieldValue);
-		}
-	}
+        var fields = type.GetFields();
+        foreach (var f in fields) {
+            var fieldValue = f.GetValue(obj);
+            io_object(fieldValue);
+        }
+    }
 
 	public void io_fixed<T>(ref T value) {
 		var type = typeof(T);
@@ -253,6 +254,8 @@ public ref struct BinSerializer
 
 	List<byte> _buf;
 }
+
+
 
 
 

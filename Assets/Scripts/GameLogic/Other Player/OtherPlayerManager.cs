@@ -12,7 +12,7 @@ public class OtherPlayerManager : MonoBehaviour, ICSideRecviable {
     void Awake() {
         otherPlayersPrefab = GetComponentsInChildren<OtherPlayer>();
         otherPlayers = new Dictionary<byte, OtherPlayer>();
-        NetManager.Instance.Client.RegisterListener(this, CSideCmd.login, CSideCmd.playField, CSideCmd.lineClear);
+        NetManager.Instance.Client.RegisterListener(this, CSideCmd.login, CSideCmd.playField, CSideCmd.lineClear, CSideCmd.nextPiece);
     }
 
     void ICSideRecviable.OnRecv(NEPacket<CSideCmd> pkt) {
@@ -33,6 +33,11 @@ public class OtherPlayerManager : MonoBehaviour, ICSideRecviable {
 
             case CSideCmd.lineClear: {
                 var p = pkt as LineClearPacket;
+                otherPlayers[p.id].OnRecv(p);
+            }
+                break;
+            case CSideCmd.nextPiece: {
+                var p = pkt as NextPiecePacket;
                 otherPlayers[p.id].OnRecv(p);
             }
                 break;

@@ -2,7 +2,7 @@
 using UnityEngine;
 using TMPro;
 
-public class LevelControl : MonoBehaviour {
+public class LevelControl : MonoBehaviour, ICSideRecviable {
 
     [Header("Prefab")]
     public Piece piecePrefab;
@@ -11,7 +11,7 @@ public class LevelControl : MonoBehaviour {
     public int startLevel = 0;
 
     [Header("UI")]
-    public Transform nextBoxTransform;
+    public Transform   nextBoxTransform;
     public TextMeshPro levelTMP;
     public TextMeshPro scoreTMP;
     public TextMeshPro lineClearedTMP;
@@ -25,20 +25,24 @@ public class LevelControl : MonoBehaviour {
         ScoreAppend(lineCleared);
         LevelAppend(lineCleared);
 
-        var pkt = new LineClearPacket() {
-            lines = (short)currentLineCleared,
-            level = (byte)currentLevel,
-            score = currentScore,
-        };
+        {//Network Code
+            var pkt = new LineClearPacket() {
+                lines = (short)currentLineCleared,
+                level = (byte)currentLevel,
+                score = currentScore,
+            };
 
-        NetManager.Instance.Client.SendToServer(pkt);
+            NetManager.Instance.Client.SendToServer(pkt);
+        }
     }
-
-
+    void ICSideRecviable.OnRecv(NEPacket<CSideCmd> pkt) {
+        SendNextPiecePacket();
+    }
 
     public void Init() {
         _rnd = new System.Random(seed);
         pieceQueue = new Queue<Piece>();
+        NetManager.Instance.Client.RegisterListener(this, CSideCmd.login);
 
         VisualUpdateLineCleared();
         VisualUpdateScore();
@@ -52,7 +56,12 @@ public class LevelControl : MonoBehaviour {
     #region Piece 
 
     public Piece GetNextPiece() {
-        pieceQueue.Enqueue(NewPiece());
+
+        var piece = NewPiece();
+        pieceQueue.Enqueue(piece);
+
+        SendNextPiecePacket(piece);
+
         return pieceQueue.Dequeue();
     }
 
@@ -65,9 +74,17 @@ public class LevelControl : MonoBehaviour {
 
         piece.transform.SetParent(nextBoxTransform);
 
-        piece.transform.localPosition = Vector3.zero;
+        piece.transform.localPosition = Vector3.zero;      
 
         return piece;
+    }
+
+    void SendNextPiecePacket(Piece p = null) {
+        var nextPiece = p != null ? p : pieceQueue.Peek();
+        var pkt = new NextPiecePacket() {
+            piece = nextPiece,
+        };
+        NetManager.Instance.Client.SendToServer(pkt);
     }
     #endregion
 
@@ -144,7 +161,6 @@ public class LevelControl : MonoBehaviour {
             return;
         levelTMP.text = currentLevel.ToString("00"); 
     }
-
     #endregion
     #endregion
 

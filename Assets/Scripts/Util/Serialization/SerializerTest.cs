@@ -8,7 +8,7 @@ public class SerializerTest : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //test_copy_array();
+        //test_Vector2Int();
 
         {
 /*            test_string();
@@ -33,13 +33,35 @@ public class SerializerTest : MonoBehaviour
         }
     }
 
+    void test_Vector2Int() {
+
+        Debug.Log("---- test_struct ----");
+
+        var src = new Vector2Int(2, 3);
+
+        var buf = new List<byte>();
+        var se = new BinSerializer(buf);
+        se.io(ref src);
+
+        Debug.Log(StringUtil.binToHex(buf));
+
+        System.Span<byte> debuf = buf.ToArray();
+        var de = new BinDeserializer(debuf);
+        var dst = new Vector2Int();
+        de.io(ref dst);
+
+        Debug.Assert(src.x == dst.x);
+        Debug.Assert(src.y == dst.y);
+
+    }
+
 
     void test_nested_array()
     {
-        uint[][] vs = new uint[20][];
+        int[][] vs = new int[20][];
 
         for(uint i = 0; i < 20; i++) {
-            vs[i] = new uint[10] {1,1,1,1,1,1,1,1,1,1 };
+            vs[i] = new int[10] {1,1,1,1,1,1,1,1,1,1 };
         }
 
         var buf = new List<byte>();

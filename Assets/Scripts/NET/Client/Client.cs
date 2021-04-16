@@ -5,6 +5,7 @@ using UnityEngine;
 public enum CSideCmd : uint {
     login,
     playField,
+    nextPiece,
     lineClear,
     debugString,
 }
@@ -35,32 +36,12 @@ public class CSideRecvChannel {
         //remove;
     }
 
-    public void OnRecv(PacketHeader hdr, System.Span<byte> buf) {
-        var cmd = (CSideCmd)hdr.cmd;
+    public void OnRecv(NEPacket<CSideCmd> pkt) {
+        var listeners = listenerMap[(int)pkt.packetHeader.cmd];
 
-        NEPacket<CSideCmd> pkt = null;
-
-        switch (cmd) {
-            case CSideCmd.login:
-                pkt = new LoginPacket();
-                break;
-
-            case CSideCmd.playField: 
-                pkt = new PlayFieldPacket();                
-                break;
-
-            case CSideCmd.lineClear: 
-                pkt = new LineClearPacket();                
-                break;
-        }
-
-        if (pkt == null) return;
-        pkt.readFromBuffer(buf);
-        var listeners = listenerMap[(int)cmd];
-
-        foreach (var listener in listeners) {
+        foreach(var listener in listeners) {
             listener.OnRecv(pkt);
-        }        
+        }
     }
 }
 
@@ -100,14 +81,33 @@ public class Client : MonoBehaviour {
 
         public override void OnRecvPacket(NESocket s, PacketHeader hdr, System.Span<byte> buf) {
 
-            if((CSideCmd)hdr.cmd == CSideCmd.debugString) {
-                var pkt = new StringPacket();
-                pkt.readFromBuffer(buf);
-                Debug.Log(pkt.s);
+            var cmd = (CSideCmd)hdr.cmd;
+            NEPacket<CSideCmd> pkt = null;
+
+            switch (cmd) {
+                case CSideCmd.login:
+                    pkt = new LoginPacket();
+                    break;
+
+                case CSideCmd.playField:
+                    pkt = new PlayFieldPacket();
+                    break;
+
+                case CSideCmd.lineClear:
+                    pkt = new LineClearPacket();
+                    break;
+
+                case CSideCmd.debugString:
+                    pkt = new StringPacket();
+                    break;
+
+                case CSideCmd.nextPiece:
+                    pkt = new NextPiecePacket();
+                    break;
             }
-            else {
-                channel.OnRecv(hdr, buf);
-            }
+            if (pkt == null) return;
+            pkt.readFromBuffer(buf);
+            channel.OnRecv(pkt);
         }
 
         public void SendPacket(NEPacket<CSideCmd> pkt) {
@@ -134,19 +134,73 @@ public class PlayFieldPacket : NEPacket<CSideCmd> {
     public Piece   piece;
     public int[][] tileMap;
 
+    public sbyte piecePosX;
+    public sbyte piecePosY;
+    public  byte pieceType;
+    public  byte pieceDir;
+
     public PlayFieldPacket() : base(CSideCmd.playField) { }
     
     protected override void serialize  (ref BinSerializer   se) {
-        se.io(ref id);
-        se.io(ref piece);
-        se.io(ref tileMap);
+        piecePosX = piece != null ? (sbyte)piece.pos.x : piecePosX;
+        piecePosY = piece != null ? (sbyte)piece.pos.y : piecePosY;
+        pieceType = piece != null ?  (byte)piece.type  : pieceType;
+        pieceDir  = piece != null ?  (byte)piece.dir   : pieceDir;
+
+        se.io(ref id       );
+        se.io(ref piecePosX);
+        se.io(ref piecePosY);
+        se.io(ref pieceType);
+        se.io(ref pieceDir );
+        se.io(ref tileMap  );
+
     }
     protected override void deserialize(ref BinDeserializer se) {
-        se.io(ref id);
-        se.io(ref piece);
-        se.io(ref tileMap);
+        tileMap  = new int[0][];
+
+        se.io(ref id       );
+        se.io(ref piecePosX);
+        se.io(ref piecePosY);
+        se.io(ref pieceType);
+        se.io(ref pieceDir );        
+        se.io(ref tileMap  );
     }
 }
+
+public class NextPiecePacket : NEPacket<CSideCmd> {// <= add piece Iserializable
+    public byte  id;
+    public Piece piece;
+
+    public sbyte piecePosX;
+    public sbyte piecePosY;
+    public  byte pieceType;
+    public  byte pieceDir;
+
+    public NextPiecePacket() : base(CSideCmd.nextPiece) { }
+
+    protected override void serialize(ref BinSerializer se) {
+        piecePosX = piece != null ? (sbyte)piece.pos.x : piecePosX;
+        piecePosY = piece != null ? (sbyte)piece.pos.y : piecePosY;
+        pieceType = piece != null ?  (byte)piece.type  : pieceType;
+        pieceDir  = piece != null ?  (byte)piece.dir   : pieceDir;
+
+        se.io(ref id       );
+        se.io(ref piecePosX);
+        se.io(ref piecePosY);
+        se.io(ref pieceType);
+        se.io(ref pieceDir );
+
+    }
+
+    protected override void deserialize(ref BinDeserializer se) {
+        se.io(ref id       );
+        se.io(ref piecePosX);
+        se.io(ref piecePosY);
+        se.io(ref pieceType);
+        se.io(ref pieceDir );
+    }
+}
+
 public class LineClearPacket : NEPacket<CSideCmd> {
     public byte  id;
     public int   score;

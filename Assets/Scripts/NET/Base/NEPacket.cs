@@ -31,11 +31,9 @@ public class NEPacket<PacketCmd> where PacketCmd : System.Enum{
     protected virtual void deserialize(ref BinDeserializer se) {;}
 
     public void writeToBuffer(List<byte> buf) {
-
         buf.Clear();
 
         var se = new BinSerializer(buf);
-
         packetHeader.serialize(ref se);
         serialize(ref se);
         packetHeader.len = (ushort)buf.Count;

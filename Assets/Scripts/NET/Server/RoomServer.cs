@@ -24,7 +24,7 @@ public class RoomServer : MonoBehaviour
             var loginPkt    = new LoginPacket () { id = (byte)s._id };
 
             SendPacket   (s, greetingPkt);
-            SendAllExcept(s, loginPkt);
+            SendAll(loginPkt);
         }
 
         public override void OnRecvPacket(NESocket s, PacketHeader hdr, Span<byte> buf) {
@@ -35,8 +35,8 @@ public class RoomServer : MonoBehaviour
                     var pkt = new PlayFieldPacket();
                     pkt.readFromBuffer(buf);
                     pkt.id = (byte)s._id;
-
-                    SendAllExcept(s, pkt);
+                        
+                    SendAll(pkt);
                 }
                     break;
 
@@ -45,13 +45,22 @@ public class RoomServer : MonoBehaviour
                     pkt.readFromBuffer(buf);
                     pkt.id = (byte)s._id;
 
-                    SendAllExcept(s, pkt);
+                    SendAll(pkt);
                 }
                     break;
 
                 case CSideCmd.debugString: {
                     var pkt = new StringPacket();
                     pkt.readFromBuffer(buf);
+                }
+                    break;
+
+                case CSideCmd.nextPiece: {
+                    var pkt = new NextPiecePacket();
+                    pkt.readFromBuffer(buf);
+                    pkt.id = (byte)s._id;
+
+                    SendAll(pkt);
                 }
                     break;
             }
