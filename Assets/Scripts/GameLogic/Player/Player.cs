@@ -9,8 +9,7 @@ public class Player : MonoBehaviour, ICSideRecviable//tetrmino controller
 
     Piece currentPiece;
 
-    public float moveCooldown = 0.05f;
-    float _moveCooldownRemain = 0;
+    float _graviateCooldownRemain = 0;
 
     LevelControl control;
 
@@ -23,18 +22,26 @@ public class Player : MonoBehaviour, ICSideRecviable//tetrmino controller
         control = GetComponent<LevelControl>();
         control.Init();
         GetPiece();
-    } 
+
+        _graviateCooldownRemain = control.currentSpeed;
+    }
+
 
     private void Update() {
-        _moveCooldownRemain -= Time.deltaTime;
+        _graviateCooldownRemain -= Time.deltaTime;
+
+/*        if(_graviateCooldownRemain <= 0) {
+            MovePiece(0, -1, 0);
+            _graviateCooldownRemain = control.currentSpeed;
+        }*/
 
         var kb = Keyboard.current;
 
-        if (kb.sKey.isPressed) MovePiece( 0, -1, 0);
-        if (kb.wKey.isPressed) MovePiece( 0,  1, 0);
-        if (kb.aKey.isPressed) MovePiece(-1,  0, 0);
-        if (kb.dKey.isPressed) MovePiece( 1,  0, 0);
-        if (kb.rKey.wasPressedThisFrame) MovePiece(0, 0, 1);
+        if (kb.sKey.wasPressedThisFrame) MovePiece( 0, -1, 0);
+        if (kb.wKey.wasPressedThisFrame) MovePiece( 0,  1, 0);
+        if (kb.aKey.wasPressedThisFrame) MovePiece(-1,  0, 0);
+        if (kb.dKey.wasPressedThisFrame) MovePiece( 1,  0, 0);
+        if (kb.rKey.wasPressedThisFrame) MovePiece( 0,  0, 1);
     }
 
     void OnPieceUpdate() {
@@ -59,8 +66,6 @@ public class Player : MonoBehaviour, ICSideRecviable//tetrmino controller
     void MovePiece(int x, int y, int rotate) => MovePiece(new Vector2Int(x, y), rotate);
 
     void MovePiece(Vector2Int offset, int rotate) {
-        if (_moveCooldownRemain > 0) return;
-        _moveCooldownRemain = moveCooldown;
 
         var pos = currentPiece.pos + offset;
         var newDir = currentPiece.NextDir(rotate);
@@ -84,7 +89,7 @@ public class Player : MonoBehaviour, ICSideRecviable//tetrmino controller
         }
 
         currentPiece.pos += offset;
-        currentPiece.dir = newDir;
+        currentPiece.dir  = newDir;
 
         OnPieceUpdate();
     }

@@ -20,6 +20,8 @@ public class LevelControl : MonoBehaviour, ICSideRecviable {
     Queue<Piece> pieceQueue;
     System.Random _rnd;
 
+    public float currentSpeed { get; private set; } = 48f/60f;
+
     public void OnLineCleared(int lineCleared) {
         LineClearedAppend(lineCleared);
         ScoreAppend(lineCleared);
@@ -54,6 +56,10 @@ public class LevelControl : MonoBehaviour, ICSideRecviable {
     }
 
     #region Piece 
+
+    public bool Gravitate() {
+        return true;
+    }
 
     public Piece GetNextPiece() {
 
@@ -92,10 +98,12 @@ public class LevelControl : MonoBehaviour, ICSideRecviable {
 
     #region Data Update
 
-    int currentLevel;
-    int currentScore;
-    int currentLineCleared;
-    int timePassed;
+    
+    int currentFrame       = 48;
+    int currentLevel       = 0;
+    int currentScore       = 0;
+    int currentLineCleared = 0;
+    int timePassed         = 0;
 
     int lineToAdvance;
 
@@ -124,7 +132,7 @@ public class LevelControl : MonoBehaviour, ICSideRecviable {
     }
 
     //Speed Lv: https://tetris.wiki/Tetris_(NES,_Nintendo)
-    void LevelAppend(int lineCleared) {
+    public void LevelAppend(int lineCleared) {
         lineToAdvance += lineCleared;
 
         if (startLevel == -1) {
@@ -138,7 +146,13 @@ public class LevelControl : MonoBehaviour, ICSideRecviable {
             startLevel = -1;
         }
 
-        currentLevel++;
+        int l = currentLevel++;
+
+        if (l < 8) currentFrame -= 5;
+        else if (l < 9) currentFrame -= 2;
+        else if (l < 29 && (l == 9 || l == 12 || l == 15 || l == 18 || l == 28)) currentFrame -= 1;
+
+        currentSpeed = currentFrame / 60f;
         lineToAdvance = 0;
 
         VisualUpdateLevel();

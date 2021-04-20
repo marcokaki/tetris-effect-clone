@@ -20,11 +20,15 @@ public class RoomServer : MonoBehaviour
 
     class RoomEngine : NetEngine {
         public override void OnAccept(NESocket s) {
-            var greetingPkt = new StringPacket() { s = "Greeting from server, your id is: " + s._id };
-            var loginPkt    = new LoginPacket () { id = (byte)s._id };
 
-            SendPacket   (s, greetingPkt);
+            var loginPkt = new LoginPacket() { id = (byte)s._id };
             SendAll(loginPkt);
+
+            foreach(var existingSock in connectSocks) {
+                if (existingSock == s) continue;
+                var existingLoginPkt = new LoginPacket() { id = (byte)existingSock._id };
+                SendPacket(s, existingLoginPkt);
+            }
         }
 
         public override void OnRecvPacket(NESocket s, PacketHeader hdr, Span<byte> buf) {
@@ -67,10 +71,3 @@ public class RoomServer : MonoBehaviour
         }
     }
 }
-
-
-
-
-
-
-

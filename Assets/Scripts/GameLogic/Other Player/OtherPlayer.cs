@@ -20,6 +20,11 @@ public class OtherPlayer : MonoBehaviour {
     Piece currentPiece;
     Piece nextPiece;
 
+    private void Awake() {
+        currentPiece = Instantiate(piecePrfab, transform);
+    }
+
+
     public void OnRecv(LoginPacket pkt) {
         awaitingTMP.gameObject.SetActive(false);
 
@@ -62,8 +67,7 @@ public class OtherPlayer : MonoBehaviour {
 
 
 
-    void SetPiecePosition(Piece p)
-    {
+    void SetPiecePosition(Piece p) {
         p.transform.localPosition = new Vector3(-playField.mapSize.x / 2 + p.pos.x + 2,
                                                 -playField.mapSize.y / 2 + p.pos.y + 2);        
     }

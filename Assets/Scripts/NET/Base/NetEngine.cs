@@ -6,8 +6,8 @@ using UnityEngine;
 
 public class NetEngine {
     readonly List<byte> sendBuff = new List<byte>();
-    readonly List<NESocket> listenSocks  = new List<NESocket>();
-    readonly List<NESocket> connectSocks = new List<NESocket>();
+    protected readonly List<NESocket> listenSocks  = new List<NESocket>();
+    protected readonly List<NESocket> connectSocks = new List<NESocket>();
 
     int connectedCount;
 

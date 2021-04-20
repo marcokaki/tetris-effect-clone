@@ -20,6 +20,7 @@ public class OtherPlayerManager : MonoBehaviour, ICSideRecviable {
 
             case CSideCmd.login: {
                 var p = pkt as LoginPacket;
+                if (otherPlayers.ContainsKey(p.id)) return;
                 otherPlayers.Add(p.id, otherPlayersPrefab[currentOtherPlayerCount++]);
                 otherPlayers[p.id].OnRecv(p);
             }
